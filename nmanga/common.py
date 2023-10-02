@@ -160,49 +160,34 @@ def actual_or_fallback(actual_ch: Optional[str], chapter_num: int) -> str:
         return proper_ch
 
 
-def create_chapter(match: Union[Match[str], PseudoChapterMatch], has_publisher: bool = False):
+def create_chapter(match: Union[Match[str], PseudoChapterMatch], title: str, has_publisher: bool = False, chapter_actual: Optional[str] = None):
     chapter_num = int(match.group("ch"))
     chapter_extra = match.group("ex")
-    chapter_vol = match.group("vol")
-    chapter_actual = match.group("actual")
-    chapter_vol_ex = match.group("volex")
-    if chapter_vol is not None:
-        if utils.is_oneshot(chapter_vol):
-            chapter_vol = 0
-        else:
-            if chapter_vol_ex is not None:
-                chapter_vol = chapter_vol.replace(chapter_vol_ex, "")
-                chapter_vol_ex = int(chapter_vol_ex[1:]) + 4
-                chapter_vol = float(f"{chapter_vol[1:]}.{chapter_vol_ex}")
-            else:
-                chapter_vol = int(chapter_vol[1:])
-
     chapter_title: Optional[str] = None
+
     try:
         chapter_title = match.group("title")
         if chapter_title is not None:
             chapter_title = utils.clean_title(chapter_title)
-    except IndexError:  # pragma: no cover (unreachable)
+    except IndexError:
         pass
 
-    act_ch_num = actual_or_fallback(chapter_actual, chapter_num)
-
-    if chapter_vol is not None:
-        chapter_data = f"{format_daiz_like_numbering(chapter_vol, 2, False, '.')}.{act_ch_num}"
+    if chapter_title is not None:
+        chapter_data = f"{title} {act_ch_num}"  # Use the 'title' argument here
     else:
-        chapter_data = act_ch_num
+        act_ch_num = actual_or_fallback(chapter_actual, chapter_num)
+        chapter_data = f"{title} {act_ch_num}"  # Use the 'title' argument here
+
     if chapter_extra is not None and chapter_actual is None:
         add_num = int(chapter_extra[1:])
         if "." not in chapter_extra:
             add_num += 4
         chapter_data += f".{add_num}"
-    if chapter_title is not None:
-        chapter_data += f" - {chapter_title}"
-    if chapter_title is None and has_publisher and chapter_extra is not None:
-        ch_ex = int(chapter_extra[1:])
-        chapter_data += f" - Extra {ch_ex}"
 
     return chapter_data
+
+
+
 
 
 def safe_int(value: str) -> Optional[int]:

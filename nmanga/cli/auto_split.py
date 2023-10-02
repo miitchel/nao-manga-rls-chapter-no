@@ -155,17 +155,20 @@ def auto_split(
         with file_handler.MangaArchive(file_path) as archive:
             for image, _ in archive:
                 filename = image.filename
+                # Inside the loop where create_chapter is called
                 match_re = chapter_re.match(path.basename(filename))
                 if not match_re:
                     console.error(f"[{volume}][!] Unable to match chapter: {filename}")
                     console.error(f"[{volume}][!] Exiting...")
                     return 1
-                chapter_data = create_chapter(match_re, publisher is not None)
+                chapter_actual = match_re.group("actual")  # Define chapter_actual here
+                chapter_data = create_chapter(match_re, title, publisher is not None, chapter_actual)
+
                 if chapter_data in skipped_chapters:
                     continue
 
                 if chapter_data not in collected_chapters:
-                    target_archive = utils.unsecure_filename(utils.secure_filename(chapter_data))
+                    target_archive = utils.unsecure_filename(utils.secure_filename(f"{title} {chapter_data}"))
                     if check_cbz_exist(target_path, target_archive):
                         console.warning(f"[{volume}][?] Skipping chapter: {chapter_data}")
                         skipped_chapters.append(chapter_data)
